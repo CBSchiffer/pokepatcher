@@ -65,6 +65,7 @@ fabricApi {
 
 dependencies {
 	// To change the versions see the gradle.properties file
+	implementation("com.google.code.gson:gson:2.10.1")
 	minecraft("net.minecraft:minecraft:1.21.1")
 	mappings("net.fabricmc:yarn:1.21.1+build.3:v2")
 	modImplementation("net.fabricmc:fabric-loader:0.16.14")
