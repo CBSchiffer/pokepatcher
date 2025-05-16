@@ -43,8 +43,10 @@ public class DatapackManager {
     }
 
     private static void copyDirectoryToJar(Path sourceDir, String jarPathPrefix, JarOutputStream jos) {
+        // TODO: Implement this
     }
 
     private static String generateFabricModJson(String modId) {
+        // TODO: Implement this
     }
 }
