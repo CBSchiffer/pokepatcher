@@ -15,11 +15,7 @@ public class PokePatcher implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
 
-		LOGGER.info("Packaging datapacks...");
-		DatapackManager.packageDatapacks();
+		LOGGER.info("Hibernating now that patching is complete...");
 	}
 }

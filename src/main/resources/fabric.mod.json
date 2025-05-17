@@ -5,7 +5,7 @@
 	"name": "PokePatcher",
 	"description": "This is an example description! Tell everyone what your mod is about!",
 	"authors": [
-		"Me!"
+		"Clokkworkk"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
@@ -18,13 +18,10 @@
 		"main": [
 			"com.clokkworkk.pokepatcher.PokePatcher"
 		],
-		"fabric-datagen": [
-			"com.clokkworkk.pokepatcher.PokePatcherDataGenerator"
+		"preLaunch": [
+			"com.clokkworkk.pokepatcher.PreLaunchManager"
 		]
 	},
-	"mixins": [
-		"pokepatcher.mixins.json"
-	],
 	"depends": {
 		"fabricloader": ">=0.16.14",
 		"minecraft": "~1.21.1",
