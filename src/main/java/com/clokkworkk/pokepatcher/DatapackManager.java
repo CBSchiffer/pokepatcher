@@ -88,22 +88,13 @@ public class DatapackManager {
 
         Path outputJar = OUTPUT_PATH.resolve(modId + ".jar");
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(outputJar))) {
-            String packageName = "com.generated." + modId;
-            String className = "Main";
             jos.putNextEntry(new JarEntry("fabric.mod.json"));
             String displayName = Arrays.stream(modId.split("_"))
                     .map(s -> s.substring(0, 1).toUpperCase() + s.substring(1))
                     .collect(Collectors.joining(" ")) + " (Patched)";
-            jos.write(generateFabricModJson(modId, displayName, description, packageName + "." + className).getBytes());
+            jos.write(generateFabricModJson(modId, displayName, description).getBytes());
             jos.closeEntry();
-            String javaSource = generateEntrypointJava(packageName, className, modId);
-            byte[] classData = compileJavaClass(packageName, className, javaSource);
 
-            if(classData != null) {
-                jos.putNextEntry(new JarEntry(packageName.replace('.', '/') + "/" + className + ".class"));
-                jos.write(classData);
-                jos.closeEntry();
-            }
             copyDirectoryToJar(datapackPath.resolve("data"), "data/", jos);
             copyDirectoryToJar(datapackPath.resolve("assets"), "assets/", jos);
             Path icon = datapackPath.resolve("pack.png");
@@ -150,7 +141,7 @@ public class DatapackManager {
      * @param description The description for the mod, borrowed from the pack.mcmeta
      * @return The fabric.mod.json file as a string
      */
-    private static String generateFabricModJson(String modId, String name, String description, String entrypointClass) {
+    private static String generateFabricModJson(String modId, String name, String description) {
         return """
                 {
                 	"schemaVersion": 1,
@@ -165,11 +156,7 @@ public class DatapackManager {
                 	"license": "MIT",
                 	"icon": "assets/%s/icon.png",
                 	"environment": "*",
-                	"entrypoints": {
-                 		"main": [
-                 			"%s"
-                 		]
-                 	},
+                	"entrypoints": {},
                 	"depends": {
                 		"fabricloader": ">=0.16.14",
                 		"minecraft": "~1.21.1",
@@ -177,33 +164,7 @@ public class DatapackManager {
                   		"fabric-api": "*"
                 	}
                 }
-                """.formatted(modId, name, description, modId, entrypointClass);
-    }
-
-    /**
-     * Generates the entrypoint Java class for the mod
-     * @param packageName The package name for the class
-     * @param className The name of the class
-     * @param modId The mod namespace from the datapack
-     * @return The entrypoint Java class as a string
-     */
-    private static String generateEntrypointJava(String packageName, String className, String modId) {
-        return """
-                package %s;
-                
-                import net.fabricmc.api.ModInitializer;
-                import org.slf4j.Logger;
-                import org.slf4j.LoggerFactory;
-                
-                public class %s implements ModInitializer {
-                	public static final Logger LOGGER = LoggerFactory.getLogger("%s");
-                
-                	@Override
-                	public void onInitialize() {
-                		LOGGER.info("Loaded datapack mod: %s");
-                	}
-                }
-                """.formatted(packageName, className, modId, modId);
+                """.formatted(modId, name, description, modId);
     }
 
     /**
@@ -248,42 +209,5 @@ public class DatapackManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Compiles the given Java source code into a byte array.
-     * @param packageName The package name for the class
-     * @param className The name of the class
-     * @param javaSource The Java source code to compile
-     * @return The compiled class data as a byte array
-     */
-    private static byte[] compileJavaClass(String packageName, String className, String javaSource) {
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        if (compiler == null) {
-            PokePatcher.LOGGER.error("No Java Compiler available. Make sure you are using a JDK, not a JRE.");
-            throw new IllegalStateException("No Java compiler available");
-        }
-
-        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-
-        // Instantiate a JavaFileManager to store the compiled output in memory
-        StandardJavaFileManager standardFileManager = compiler.getStandardFileManager(diagnostics, null, null);
-        MemoryJavaFileManager memoryJavaFileManager = new MemoryJavaFileManager(standardFileManager);
-
-        String fullClassName = packageName + "." + className;
-        JavaFileObject sourceObject = new JavaSourceFromString(fullClassName, javaSource);
-
-        JavaCompiler.CompilationTask task = compiler.getTask(
-                null, memoryJavaFileManager, diagnostics, null, null, Collections.singletonList(sourceObject)
-        );
-
-        boolean success = task.call();
-        if (!success) {
-            for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-                PokePatcher.LOGGER.error("Error on line {}: {}", diagnostic.getLineNumber(), diagnostic.getMessage(null));
-            }
-            throw new RuntimeException("Compilation failed");
-        }
-        return memoryJavaFileManager.getCompiledClassData(fullClassName);
     }
 }

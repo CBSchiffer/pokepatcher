@@ -15,9 +15,9 @@ architectury {
 
 loom {
 	silentMojangMappingsLicense()
-	mixin {
-		defaultRefmapName.set("mixins.${project.name}.refmap.json")
-	}
+//	mixin {
+//		defaultRefmapName.set("mixins.${project.name}.refmap.json")
+//	}
 }
 
 base {
