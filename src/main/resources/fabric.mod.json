@@ -3,15 +3,15 @@
 	"id": "pokepatcher",
 	"version": "${version}",
 	"name": "PokePatcher",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Converts Cobblemon Datapacks to Fabric Mods to be used with Cobblemon. Designed to workaround a bug preventing datapack mons from loading properly.",
 	"authors": [
 		"Clokkworkk"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/CBSchiffer/pokepatcher"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/pokepatcher/icon.png",
 	"environment": "*",
 	"entrypoints": {

@@ -1,6 +1,7 @@
 package com.clokkworkk.pokepatcher;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.netty.buffer.ByteBuf;
@@ -10,10 +11,7 @@ import javax.tools.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
@@ -21,28 +19,36 @@ import java.util.stream.Collectors;
 public class DatapackManager {
 
     private static final Path DATAPACK_PATH = Paths.get("config", "pokepatcher", "datapacks");
-    private static final Path OUTPUT_PATH = Paths.get( "config", "pokepatcher", "generated");
+    private static final Path OUTPUT_PATH = Paths.get( "mods" );
     private static final Path TEMP_PATH = Paths.get("config", "pokepatcher", "temp");
+    private static final Path RECORD_PATH = Paths.get("config", "pokepatcher", "patches.json");
 
     /**
      * Scans the datapack directory for datapacks and packages them into jar files.
+     * This method will also unzip any zip files found in the directory.
+     * (Skips any datapacks that have already been patched)
      */
     public static void packageDatapacks() {
         try {
             PokePatcher.LOGGER.info("Scanning for datapacks...");
             Files.createDirectories(DATAPACK_PATH);
-            Files.createDirectories(OUTPUT_PATH);
             Files.createDirectories(TEMP_PATH);
             List<Path> roots = new ArrayList<>();
-
+            Set<String> patches = readPatches();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(DATAPACK_PATH)) {
                 for (Path entry : stream) {
+                    if (patches.contains(entry.getFileName().toString())) {
+                        PokePatcher.LOGGER.info("Skipping already patched datapack: " + entry.getFileName());
+                        continue;
+                    }
                     if (Files.isDirectory(entry)) {
                         roots.add(entry);
+                        patches.add(entry.getFileName().toString());
                     } else if (entry.toString().endsWith(".zip")) {
                         Path targetDir = TEMP_PATH.resolve(entry.getFileName().toString().replace(".zip", ""));
                         unzip(entry, targetDir);
                         roots.add(targetDir);
+                        patches.add(targetDir.getFileName().toString() + ".zip");
                     }
                 }
             } catch (IOException e) {
@@ -53,6 +59,8 @@ public class DatapackManager {
             roots.stream()
                     .filter(Files::isDirectory)
                     .forEach(DatapackManager::packageDatapack);
+            savePatches(patches);
+            PokePatcher.LOGGER.info("Finished packaging datapacks! Restart Minecraft to load them!");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -206,6 +214,45 @@ public class DatapackManager {
                     }
                 });
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Reads the patches from the patches.json file.
+     * @return A set of patches
+     */
+    private static Set<String> readPatches() {
+        try {
+            if (Files.exists(RECORD_PATH)) {
+                String json = Files.readString(RECORD_PATH);
+                JsonArray jsonArray = JsonParser.parseString(json).getAsJsonArray();
+                Set<String> patches = new HashSet<>();
+                for (var key : jsonArray) {
+                    patches.add(key.getAsString());
+                }
+                return patches;
+            } else {
+                return new HashSet<>();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new HashSet<>();
+        }
+    }
+
+    /**
+     * Saves the patches to the patches.json file.
+     * @param patches The set of patches to save
+     */
+    private static void savePatches(Set<String> patches) {
+        try {
+            JsonArray jsonArray = new JsonArray();
+            for (String patch : patches) {
+                jsonArray.add(patch);
+            }
+            Files.writeString(RECORD_PATH, jsonArray.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }
