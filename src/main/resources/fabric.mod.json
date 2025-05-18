@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"id": "pokepatcher",
 	"version": "${version}",
-	"name": "PokePatcher",
+	"name": "Clokkworkk's PokePatcher",
 	"description": "Converts Cobblemon Datapacks to Fabric Mods to be used with Cobblemon. Designed to workaround a bug preventing datapack mons from loading properly.",
 	"authors": [
 		"Clokkworkk"
